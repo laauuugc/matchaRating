@@ -2,6 +2,12 @@
 let currentStream = null;
 let currentImageData = null;
 let images = JSON.parse(localStorage.getItem('matchaImages') || '[]');
+let apiKey = sessionStorage.getItem('openai_api_key') || '';
+let isDemoMode = false;
+
+// OpenAI API Configuration
+const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
+const MAX_IMAGE_SIZE = 1024; // Max dimension for API optimization
 
 // DOM elements
 const elements = {
@@ -75,7 +81,10 @@ const elements = {
     closeModal: document.querySelector('.close-modal'),
     
     // Toast
-    toastContainer: document.getElementById('toastContainer')
+    toastContainer: document.getElementById('toastContainer'),
+    
+    // Settings
+    settingsBtn: document.getElementById('settingsBtn')
 };
 
 // Initialize the application
@@ -84,6 +93,7 @@ document.addEventListener('DOMContentLoaded', function() {
     setupEventListeners();
     updateGallery();
     updateStatistics();
+    checkApiKeyStatus();
 });
 
 // Initialize the application
@@ -92,8 +102,174 @@ function initializeApp() {
     const firstVisit = localStorage.getItem('firstVisit');
     if (!firstVisit) {
         localStorage.setItem('firstVisit', new Date().toISOString());
-        showToast('Welcome to Matcha Quality Rater! Start by capturing your first matcha photo.', 'info');
+        showApiKeyModal();
     }
+}
+
+// API Key Management
+function checkApiKeyStatus() {
+    if (!apiKey) {
+        showToast('No API key found. Using demo mode with simulated AI analysis.', 'info');
+        isDemoMode = true;
+    } else {
+        isDemoMode = false;
+        showToast('AI analysis enabled with ChatGPT Vision API!', 'success');
+    }
+}
+
+function showApiKeyModal() {
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width: 500px;">
+            <div style="text-align: center; margin-bottom: 2rem;">
+                <i class="fas fa-robot" style="font-size: 3rem; color: var(--primary-green); margin-bottom: 1rem;"></i>
+                <h2>Enable AI Analysis</h2>
+                <p>Get professional matcha quality analysis powered by ChatGPT Vision API</p>
+            </div>
+            
+            <div style="margin-bottom: 2rem;">
+                <label for="apiKeyInput" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">OpenAI API Key</label>
+                <input type="password" id="apiKeyInput" placeholder="sk-..." style="width: 100%; padding: 0.75rem; border: 1px solid var(--gray-300); border-radius: var(--radius-md); font-family: monospace;">
+                <small style="color: var(--gray-600); display: block; margin-top: 0.5rem;">
+                    Your API key is stored securely in session storage and never saved permanently.
+                </small>
+            </div>
+            
+            <div style="background: var(--warm-cream); padding: 1rem; border-radius: var(--radius-md); margin-bottom: 2rem;">
+                <h4 style="margin-bottom: 0.5rem; color: var(--primary-green);">
+                    <i class="fas fa-info-circle"></i> How to get an API key:
+                </h4>
+                <ol style="margin: 0; padding-left: 1.5rem; color: var(--gray-700);">
+                    <li>Visit <a href="https://platform.openai.com/api-keys" target="_blank" style="color: var(--primary-green);">OpenAI Platform</a></li>
+                    <li>Sign up or log in to your account</li>
+                    <li>Create a new API key</li>
+                    <li>Copy the key (starts with "sk-")</li>
+                </ol>
+            </div>
+            
+            <div style="display: flex; gap: 1rem; justify-content: center;">
+                <button id="skipApiKey" class="btn btn-secondary">
+                    <i class="fas fa-play"></i> Try Demo Mode
+                </button>
+                <button id="saveApiKey" class="btn btn-primary">
+                    <i class="fas fa-key"></i> Enable AI Analysis
+                </button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Event listeners
+    document.getElementById('saveApiKey').addEventListener('click', () => {
+        const key = document.getElementById('apiKeyInput').value.trim();
+        if (validateApiKey(key)) {
+            apiKey = key;
+            sessionStorage.setItem('openai_api_key', key);
+            isDemoMode = false;
+            document.body.removeChild(modal);
+            showToast('AI analysis enabled! Your API key is securely stored.', 'success');
+        } else {
+            showToast('Please enter a valid OpenAI API key (starts with "sk-")', 'error');
+        }
+    });
+    
+    document.getElementById('skipApiKey').addEventListener('click', () => {
+        isDemoMode = true;
+        document.body.removeChild(modal);
+        showToast('Demo mode enabled. You can add an API key later in settings.', 'info');
+    });
+    
+    // Close modal on outside click
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            document.body.removeChild(modal);
+        }
+    });
+}
+
+function validateApiKey(key) {
+    return key && key.startsWith('sk-') && key.length > 20;
+}
+
+function showSettingsModal() {
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width: 500px;">
+            <div style="text-align: center; margin-bottom: 2rem;">
+                <i class="fas fa-cog" style="font-size: 3rem; color: var(--primary-green); margin-bottom: 1rem;"></i>
+                <h2>Settings</h2>
+                <p>Configure your matcha analysis preferences</p>
+            </div>
+            
+            <div style="margin-bottom: 2rem;">
+                <label for="settingsApiKeyInput" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">OpenAI API Key</label>
+                <input type="password" id="settingsApiKeyInput" placeholder="${apiKey ? '••••••••••••••••' : 'sk-...'}" style="width: 100%; padding: 0.75rem; border: 1px solid var(--gray-300); border-radius: var(--radius-md); font-family: monospace;">
+                <small style="color: var(--gray-600); display: block; margin-top: 0.5rem;">
+                    ${apiKey ? 'API key is configured. Click "Update" to change it.' : 'Enter your OpenAI API key to enable AI analysis.'}
+                </small>
+            </div>
+            
+            <div style="background: var(--warm-cream); padding: 1rem; border-radius: var(--radius-md); margin-bottom: 2rem;">
+                <h4 style="margin-bottom: 0.5rem; color: var(--primary-green);">
+                    <i class="fas fa-info-circle"></i> Current Status:
+                </h4>
+                <p style="margin: 0; color: var(--gray-700);">
+                    <i class="fas fa-${isDemoMode ? 'play' : 'robot'}"></i> 
+                    ${isDemoMode ? 'Demo Mode - Using simulated analysis' : 'AI Mode - Using ChatGPT Vision API'}
+                </p>
+                ${apiKey ? '<p style="margin: 0.5rem 0 0 0; color: var(--gray-600); font-size: 0.9rem;">Estimated cost per analysis: ~$0.01-0.03</p>' : ''}
+            </div>
+            
+            <div style="display: flex; gap: 1rem; justify-content: center;">
+                <button id="clearApiKey" class="btn btn-secondary" ${!apiKey ? 'disabled' : ''}>
+                    <i class="fas fa-trash"></i> Clear Key
+                </button>
+                <button id="updateApiKey" class="btn btn-primary">
+                    <i class="fas fa-save"></i> ${apiKey ? 'Update' : 'Save'} Key
+                </button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Event listeners
+    document.getElementById('updateApiKey').addEventListener('click', () => {
+        const key = document.getElementById('settingsApiKeyInput').value.trim();
+        if (key === '' || validateApiKey(key)) {
+            apiKey = key;
+            if (key) {
+                sessionStorage.setItem('openai_api_key', key);
+                isDemoMode = false;
+                showToast('API key updated! AI analysis enabled.', 'success');
+            } else {
+                sessionStorage.removeItem('openai_api_key');
+                isDemoMode = true;
+                showToast('API key cleared. Demo mode enabled.', 'info');
+            }
+            document.body.removeChild(modal);
+        } else {
+            showToast('Please enter a valid OpenAI API key (starts with "sk-")', 'error');
+        }
+    });
+    
+    document.getElementById('clearApiKey').addEventListener('click', () => {
+        apiKey = '';
+        sessionStorage.removeItem('openai_api_key');
+        isDemoMode = true;
+        document.body.removeChild(modal);
+        showToast('API key cleared. Demo mode enabled.', 'info');
+    });
+    
+    // Close modal on outside click
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            document.body.removeChild(modal);
+        }
+    });
 }
 
 // Setup event listeners
@@ -130,6 +306,9 @@ function setupEventListeners() {
     elements.imageModal.addEventListener('click', (e) => {
         if (e.target === elements.imageModal) closeImageModal();
     });
+    
+    // Settings
+    elements.settingsBtn.addEventListener('click', showSettingsModal);
     
     // Keyboard shortcuts
     document.addEventListener('keydown', handleKeyboard);
@@ -261,7 +440,125 @@ async function analyzeImage() {
         return;
     }
     
-    showLoading('Analyzing matcha quality...');
+    if (isDemoMode) {
+        await performDemoAnalysis();
+    } else {
+        await performAIAnalysis();
+    }
+}
+
+async function performAIAnalysis() {
+    try {
+        showLoading('Analyzing with AI...');
+        
+        // Compress image for API
+        const compressedImage = await compressImage(currentImageData);
+        
+        // Prepare the AI prompt
+        const prompt = `You are a professional matcha expert. Analyze this matcha image and rate its quality from 1-10 based on: 1) Color (vibrant green=high quality, dull/brown=low quality), 2) Texture (fine powder vs clumpy), 3) Froth quality (smooth, creamy foam), 4) Consistency (even distribution), 5) Preparation signs (proper whisking technique visible). 
+
+Provide your response in this exact JSON format:
+{
+  "score": [number 1-10],
+  "grade": "[A-F]",
+  "colorVibrancy": [number 1-10],
+  "powderTexture": [number 1-10],
+  "frothQuality": [number 1-10],
+  "consistency": [number 1-10],
+  "confidence": "[High/Medium/Low]",
+  "explanation": "[2-3 sentence explanation focusing on specific visual indicators]"
+}`;
+
+        const response = await fetch(OPENAI_API_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${apiKey}`
+            },
+            body: JSON.stringify({
+                model: 'gpt-4-vision-preview',
+                messages: [
+                    {
+                        role: 'user',
+                        content: [
+                            {
+                                type: 'text',
+                                text: prompt
+                            },
+                            {
+                                type: 'image_url',
+                                image_url: {
+                                    url: compressedImage
+                                }
+                            }
+                        ]
+                    }
+                ],
+                max_tokens: 500,
+                temperature: 0.3
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`API Error: ${response.status} ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        
+        if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+            throw new Error('Invalid API response format');
+        }
+
+        const aiResponse = data.choices[0].message.content;
+        
+        // Parse the JSON response
+        let ratings;
+        try {
+            // Extract JSON from the response (in case there's extra text)
+            const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
+            if (jsonMatch) {
+                ratings = JSON.parse(jsonMatch[0]);
+            } else {
+                throw new Error('No JSON found in response');
+            }
+        } catch (parseError) {
+            console.error('Failed to parse AI response:', aiResponse);
+            throw new Error('Failed to parse AI analysis');
+        }
+
+        // Validate the response
+        if (!ratings.score || !ratings.grade || !ratings.explanation) {
+            throw new Error('Incomplete AI analysis response');
+        }
+
+        // Update UI with AI results
+        updateRatingDisplay(ratings);
+        
+        hideLoading();
+        elements.ratingResult.classList.remove('hidden');
+        
+        showToast('AI analysis complete! Powered by ChatGPT Vision', 'success');
+        
+    } catch (error) {
+        console.error('AI Analysis Error:', error);
+        hideLoading();
+        
+        if (error.message.includes('401') || error.message.includes('403')) {
+            showToast('Invalid API key. Please check your OpenAI API key.', 'error');
+            showApiKeyModal();
+        } else if (error.message.includes('429')) {
+            showToast('API rate limit exceeded. Please try again later.', 'error');
+        } else if (error.message.includes('network')) {
+            showToast('Network error. Please check your internet connection.', 'error');
+        } else {
+            showToast('AI analysis failed. Falling back to demo mode.', 'error');
+            await performDemoAnalysis();
+        }
+    }
+}
+
+async function performDemoAnalysis() {
+    showLoading('Analyzing matcha quality (Demo Mode)...');
     
     // Simulate AI analysis with realistic delays
     await new Promise(resolve => setTimeout(resolve, 2000));
@@ -275,7 +572,7 @@ async function analyzeImage() {
     hideLoading();
     elements.ratingResult.classList.remove('hidden');
     
-    showToast('Analysis complete!', 'success');
+    showToast('Demo analysis complete! Add API key for real AI analysis.', 'info');
 }
 
 function generateMatchaRatings() {
@@ -308,20 +605,54 @@ function generateMatchaRatings() {
     else explanation = explanations.poor;
     
     return {
-        overallScore: Math.round(overallScore * 10) / 10,
+        score: Math.round(overallScore * 10) / 10,
+        grade,
         colorVibrancy: Math.round(colorVibrancy * 10) / 10,
         powderTexture: Math.round(powderTexture * 10) / 10,
         frothQuality: Math.round(frothQuality * 10) / 10,
         consistency: Math.round(consistency * 10) / 10,
-        grade,
         confidence,
         explanation
     };
 }
 
+async function compressImage(imageData) {
+    return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = function() {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Calculate new dimensions while maintaining aspect ratio
+            let { width, height } = img;
+            if (width > height) {
+                if (width > MAX_IMAGE_SIZE) {
+                    height = (height * MAX_IMAGE_SIZE) / width;
+                    width = MAX_IMAGE_SIZE;
+                }
+            } else {
+                if (height > MAX_IMAGE_SIZE) {
+                    width = (width * MAX_IMAGE_SIZE) / height;
+                    height = MAX_IMAGE_SIZE;
+                }
+            }
+            
+            canvas.width = width;
+            canvas.height = height;
+            
+            // Draw and compress
+            ctx.drawImage(img, 0, 0, width, height);
+            const compressedData = canvas.toDataURL('image/jpeg', 0.8);
+            
+            resolve(compressedData);
+        };
+        img.src = imageData;
+    });
+}
+
 function updateRatingDisplay(ratings) {
     // Update overall score and grade
-    elements.scoreValue.textContent = ratings.overallScore;
+    elements.scoreValue.textContent = ratings.score;
     elements.gradeBadge.textContent = ratings.grade;
     elements.confidenceText.textContent = `${ratings.confidence} Confidence`;
     
@@ -348,6 +679,14 @@ function updateRatingDisplay(ratings) {
         'Low': '#ffc107'
     };
     elements.confidenceBadge.style.background = confidenceColors[ratings.confidence];
+    
+    // Add AI attribution if not in demo mode
+    if (!isDemoMode) {
+        const attribution = document.createElement('div');
+        attribution.style.cssText = 'text-align: center; margin-top: 1rem; font-size: 0.9rem; color: var(--gray-600);';
+        attribution.innerHTML = '<i class="fas fa-robot"></i> Powered by ChatGPT Vision API';
+        elements.ratingResult.appendChild(attribution);
+    }
 }
 
 // Save and share functions
@@ -369,7 +708,8 @@ function saveImage() {
             frothQuality: parseFloat(elements.frothScore.textContent),
             consistency: parseFloat(elements.consistencyScore.textContent),
             confidence: elements.confidenceText.textContent.split(' ')[0],
-            explanation: elements.explanationText.textContent
+            explanation: elements.explanationText.textContent,
+            analyzedBy: isDemoMode ? 'Demo Mode' : 'ChatGPT Vision API'
         }
     };
     
@@ -384,12 +724,12 @@ function shareImage() {
     if (navigator.share) {
         navigator.share({
             title: 'My Matcha Quality Assessment',
-            text: `I rated my matcha ${elements.scoreValue.textContent}/10 (Grade ${elements.gradeBadge.textContent})!`,
+            text: `I rated my matcha ${elements.scoreValue.textContent}/10 (Grade ${elements.gradeBadge.textContent}) using ${isDemoMode ? 'demo analysis' : 'AI analysis'}!`,
             url: window.location.href
         });
     } else {
         // Fallback: copy to clipboard
-        const text = `Matcha Quality: ${elements.scoreValue.textContent}/10 (Grade ${elements.gradeBadge.textContent})`;
+        const text = `Matcha Quality: ${elements.scoreValue.textContent}/10 (Grade ${elements.gradeBadge.textContent}) - ${isDemoMode ? 'Demo Analysis' : 'AI Analysis'}`;
         navigator.clipboard.writeText(text).then(() => {
             showToast('Rating copied to clipboard!', 'success');
         });
@@ -427,6 +767,8 @@ function updateGallery() {
 
 function createGalleryItem(image) {
     const date = new Date(image.date).toLocaleDateString();
+    const analyzedBy = image.rating.analyzedBy || 'Demo Mode';
+    
     return `
         <div class="gallery-item" data-id="${image.id}">
             <img src="${image.data}" alt="Matcha assessment">
@@ -441,6 +783,9 @@ function createGalleryItem(image) {
                     </button>
                 </div>
                 <div class="gallery-item-date">${date}</div>
+                <div style="font-size: 0.8rem; color: var(--gray-500); margin-bottom: 0.5rem;">
+                    <i class="fas fa-${analyzedBy.includes('AI') ? 'robot' : 'play'}"></i> ${analyzedBy}
+                </div>
                 <div class="gallery-item-actions">
                     <button class="btn btn-primary" onclick="openImageModal(${image.id})">
                         <i class="fas fa-eye"></i> View
@@ -460,11 +805,13 @@ function filterImages(images) {
         const grade = image.rating.grade.toLowerCase();
         const date = new Date(image.date).toLocaleDateString();
         const explanation = image.rating.explanation.toLowerCase();
+        const analyzedBy = (image.rating.analyzedBy || 'Demo Mode').toLowerCase();
         
         return score.includes(searchTerm) || 
                grade.includes(searchTerm) || 
                date.includes(searchTerm) ||
-               explanation.includes(searchTerm);
+               explanation.includes(searchTerm) ||
+               analyzedBy.includes(searchTerm);
     });
 }
 
@@ -517,11 +864,23 @@ function openImageModal(imageId) {
     `;
     elements.modalDate.textContent = new Date(image.date).toLocaleDateString();
     
+    // Add analysis method info
+    const analyzedBy = image.rating.analyzedBy || 'Demo Mode';
+    const analysisInfo = document.createElement('div');
+    analysisInfo.style.cssText = 'margin-top: 0.5rem; font-size: 0.9rem; color: var(--gray-600);';
+    analysisInfo.innerHTML = `<i class="fas fa-${analyzedBy.includes('AI') ? 'robot' : 'play'}"></i> ${analyzedBy}`;
+    elements.modalRating.appendChild(analysisInfo);
+    
     elements.imageModal.classList.remove('hidden');
 }
 
 function closeImageModal() {
     elements.imageModal.classList.add('hidden');
+    // Clean up any added elements
+    const analysisInfo = elements.modalRating.querySelector('div');
+    if (analysisInfo) {
+        analysisInfo.remove();
+    }
 }
 
 // Statistics functions
@@ -672,6 +1031,7 @@ function exportReport() {
     const report = {
         title: 'Matcha Quality Assessment Report',
         generated: new Date().toISOString(),
+        analysisMethod: isDemoMode ? 'Demo Mode' : 'ChatGPT Vision API',
         summary: {
             totalPhotos: images.length,
             averageRating: (images.reduce((sum, img) => sum + img.rating.score, 0) / images.length).toFixed(1),
@@ -682,6 +1042,7 @@ function exportReport() {
             date: img.date,
             score: img.rating.score,
             grade: img.rating.grade,
+            analyzedBy: img.rating.analyzedBy || 'Demo Mode',
             factors: {
                 colorVibrancy: img.rating.colorVibrancy,
                 powderTexture: img.rating.powderTexture,

@@ -8,7 +8,8 @@ A modern, AI-powered web application for assessing matcha tea quality through im
 
 - **Camera Capture**: Take photos directly using your device's camera
 - **File Upload**: Drag & drop or select images from your device
-- **AI Analysis**: Simulated AI-powered quality assessment (0-10 scale)
+- **AI Analysis**: Real AI-powered quality assessment using OpenAI's ChatGPT Vision API
+- **Demo Mode**: Fallback simulated analysis when no API key is provided
 - **Quality Factors**: Analyzes color vibrancy, powder texture, froth quality, and consistency
 - **Grade System**: Letter grades (A-F) with detailed explanations
 
@@ -33,9 +34,11 @@ A modern, AI-powered web application for assessing matcha tea quality through im
 - **Responsive Design**: Works seamlessly on mobile and desktop
 - **Modern UI**: Matcha-themed color palette with smooth animations
 - **Local Storage**: All data saved locally in your browser
+- **API Key Management**: Secure session storage for OpenAI API keys
 - **Loading States**: Visual feedback during image processing
 - **Toast Notifications**: Success, error, and info messages
 - **Keyboard Shortcuts**: ESC key to close modals and camera
+- **Settings Panel**: Easy API key management and mode switching
 
 ## 🎨 Design
 
@@ -61,6 +64,7 @@ A modern, AI-powered web application for assessing matcha tea quality through im
 ### Prerequisites
 
 - Modern web browser with camera access
+- OpenAI API key (optional - demo mode available)
 - No additional software or dependencies required
 
 ### Installation
@@ -68,7 +72,26 @@ A modern, AI-powered web application for assessing matcha tea quality through im
 1. Clone or download this repository
 2. Open `index.html` in your web browser
 3. Grant camera permissions when prompted
-4. Start capturing and analyzing matcha photos!
+4. Choose between AI mode (requires API key) or demo mode
+5. Start capturing and analyzing matcha photos!
+
+### AI Setup (Optional)
+
+1. **Get an OpenAI API Key**:
+   - Visit [OpenAI Platform](https://platform.openai.com/api-keys)
+   - Sign up or log in to your account
+   - Create a new API key
+   - Copy the key (starts with "sk-")
+
+2. **Enable AI Analysis**:
+   - Click the settings gear icon in the header
+   - Enter your API key in the settings modal
+   - Click "Save Key" to enable AI analysis
+
+3. **Cost Information**:
+   - Each analysis costs approximately $0.01-0.03
+   - Images are automatically compressed to reduce costs
+   - You can switch to demo mode anytime to avoid charges
 
 ### Browser Compatibility
 
@@ -93,12 +116,13 @@ A modern, AI-powered web application for assessing matcha tea quality through im
 ### Analyzing Quality
 
 1. After capturing/uploading an image, click "Analyze Matcha Quality"
-2. Wait for the AI analysis (simulated 2-second delay)
+2. Wait for the AI analysis (real AI takes 3-5 seconds, demo mode is instant)
 3. Review the detailed assessment:
    - Overall score (0-10) and letter grade (A-F)
    - Individual factor scores with progress bars
    - Confidence level indicator
    - Detailed explanation of findings
+   - AI attribution (when using ChatGPT Vision API)
 
 ### Managing Your Gallery
 
@@ -130,6 +154,8 @@ A modern, AI-powered web application for assessing matcha tea quality through im
 - **CSS3**: Custom properties, Grid, Flexbox, animations
 - **JavaScript ES6+**: Async/await, modules, modern APIs
 - **Web APIs**: MediaDevices, File API, Canvas API, LocalStorage
+- **OpenAI API**: ChatGPT Vision for image analysis
+- **Session Storage**: Secure API key management
 
 ### Data Structure
 
@@ -146,7 +172,8 @@ A modern, AI-powered web application for assessing matcha tea quality through im
     frothQuality: number,
     consistency: number,
     confidence: string,
-    explanation: string
+    explanation: string,
+    analyzedBy: "ChatGPT Vision API" | "Demo Mode"
   }
 }
 ```
@@ -202,9 +229,16 @@ A modern, AI-powered web application for assessing matcha tea quality through im
 ### Local Storage
 
 - All images and ratings are stored locally in your browser
-- No data is sent to external servers
+- No data is sent to external servers (except for AI analysis)
 - Data persists until browser cache is cleared
 - Export feature allows you to backup your data
+
+### API Key Security
+
+- API keys are stored securely in session storage
+- Keys are never saved permanently or sent to external servers
+- Keys are cleared when browser session ends
+- Demo mode available for privacy-conscious users
 
 ### Camera Access
 
@@ -232,8 +266,10 @@ A modern, AI-powered web application for assessing matcha tea quality through im
 
 1. **Camera not working**: Check browser permissions and HTTPS requirement
 2. **Images not saving**: Ensure localStorage is enabled in your browser
-3. **Slow performance**: Close other tabs to free up memory
-4. **Layout issues**: Try refreshing the page or clearing browser cache
+3. **AI analysis failing**: Check your API key and internet connection
+4. **API rate limits**: Wait a few minutes before trying again
+5. **Slow performance**: Close other tabs to free up memory
+6. **Layout issues**: Try refreshing the page or clearing browser cache
 
 ### Browser-Specific Notes
 
@@ -243,7 +279,7 @@ A modern, AI-powered web application for assessing matcha tea quality through im
 
 ## 🤝 Contributing
 
-This is a demonstration project, but suggestions and improvements are welcome:
+This is a personal project, but suggestions and improvements are welcome:
 
 1. Fork the repository
 2. Create a feature branch
