@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Matcha Quality Rater</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1><i class="fas fa-leaf"></i> Matcha Quality Rater</h1>
+                <p>AI-powered matcha quality assessment</p>
+            </div>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="nav-tabs">
+            <button class="nav-tab active" data-tab="capture">
+                <i class="fas fa-camera"></i> Capture
+            </button>
+            <button class="nav-tab" data-tab="gallery">
+                <i class="fas fa-images"></i> Gallery
+            </button>
+            <button class="nav-tab" data-tab="stats">
+                <i class="fas fa-chart-bar"></i> Statistics
+            </button>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Capture Tab -->
+            <section id="capture" class="tab-content active">
+                <div class="capture-container">
+                    <div class="capture-methods">
+                        <div class="method-card">
+                            <h3><i class="fas fa-camera"></i> Camera Capture</h3>
+                            <p>Take a photo using your device camera</p>
+                            <button id="cameraBtn" class="btn btn-primary">
+                                <i class="fas fa-camera"></i> Open Camera
+                            </button>
+                        </div>
+                        
+                        <div class="method-card">
+                            <h3><i class="fas fa-upload"></i> File Upload</h3>
+                            <p>Upload an image from your device</p>
+                            <div class="upload-area" id="uploadArea">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <p>Drag & drop or click to upload</p>
+                                <input type="file" id="fileInput" accept="image/*" hidden>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Camera Preview -->
+                    <div id="cameraPreview" class="camera-preview hidden">
+                        <div class="preview-header">
+                            <h3>Camera Preview</h3>
+                            <button id="closeCamera" class="btn btn-secondary">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <video id="video" autoplay playsinline></video>
+                        <div class="camera-controls">
+                            <button id="captureBtn" class="btn btn-primary">
+                                <i class="fas fa-camera"></i> Capture Photo
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Image Preview and Rating -->
+                    <div id="imagePreview" class="image-preview hidden">
+                        <div class="preview-header">
+                            <h3>Image Preview</h3>
+                            <button id="retakeBtn" class="btn btn-secondary">
+                                <i class="fas fa-redo"></i> Retake
+                            </button>
+                        </div>
+                        <div class="preview-content">
+                            <img id="previewImage" alt="Preview">
+                            <div class="rating-section">
+                                <button id="analyzeBtn" class="btn btn-primary">
+                                    <i class="fas fa-magic"></i> Analyze Matcha Quality
+                                </button>
+                                
+                                <div id="ratingResult" class="rating-result hidden">
+                                    <div class="rating-header">
+                                        <h3>Quality Assessment</h3>
+                                        <div class="confidence-badge" id="confidenceBadge">
+                                            <i class="fas fa-check-circle"></i>
+                                            <span id="confidenceText">High Confidence</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="rating-display">
+                                        <div class="score-container">
+                                            <div class="score-circle">
+                                                <span id="scoreValue">8.5</span>
+                                                <span class="score-max">/10</span>
+                                            </div>
+                                            <div class="grade-badge" id="gradeBadge">A</div>
+                                        </div>
+                                        
+                                        <div class="rating-bars">
+                                            <div class="rating-factor">
+                                                <span>Color Vibrancy</span>
+                                                <div class="progress-bar">
+                                                    <div class="progress" id="colorProgress" style="width: 85%"></div>
+                                                </div>
+                                                <span class="factor-score" id="colorScore">8.5</span>
+                                            </div>
+                                            <div class="rating-factor">
+                                                <span>Powder Texture</span>
+                                                <div class="progress-bar">
+                                                    <div class="progress" id="textureProgress" style="width: 75%"></div>
+                                                </div>
+                                                <span class="factor-score" id="textureScore">7.5</span>
+                                            </div>
+                                            <div class="rating-factor">
+                                                <span>Froth Quality</span>
+                                                <div class="progress-bar">
+                                                    <div class="progress" id="frothProgress" style="width: 90%"></div>
+                                                </div>
+                                                <span class="factor-score" id="frothScore">9.0</span>
+                                            </div>
+                                            <div class="rating-factor">
+                                                <span>Consistency</span>
+                                                <div class="progress-bar">
+                                                    <div class="progress" id="consistencyProgress" style="width: 80%"></div>
+                                                </div>
+                                                <span class="factor-score" id="consistencyScore">8.0</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="rating-explanation">
+                                        <h4>Analysis Summary</h4>
+                                        <p id="explanationText">This matcha shows excellent color vibrancy with a bright, natural green hue. The powder texture appears fine and well-ground, while the froth quality is exceptional with good bubble formation. Overall consistency is very good.</p>
+                                    </div>
+                                    
+                                    <div class="action-buttons">
+                                        <button id="saveBtn" class="btn btn-success">
+                                            <i class="fas fa-save"></i> Save to Gallery
+                                        </button>
+                                        <button id="shareBtn" class="btn btn-secondary">
+                                            <i class="fas fa-share"></i> Share
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Gallery Tab -->
+            <section id="gallery" class="tab-content">
+                <div class="gallery-container">
+                    <div class="gallery-header">
+                        <div class="gallery-controls">
+                            <div class="search-box">
+                                <i class="fas fa-search"></i>
+                                <input type="text" id="searchInput" placeholder="Search images...">
+                            </div>
+                            <div class="sort-controls">
+                                <select id="sortSelect">
+                                    <option value="date-desc">Newest First</option>
+                                    <option value="date-asc">Oldest First</option>
+                                    <option value="rating-desc">Highest Rating</option>
+                                    <option value="rating-asc">Lowest Rating</option>
+                                </select>
+                            </div>
+                            <button id="exportBtn" class="btn btn-secondary">
+                                <i class="fas fa-download"></i> Export Report
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="gallery-grid" id="galleryGrid">
+                        <!-- Images will be dynamically added here -->
+                    </div>
+                    
+                    <div id="emptyGallery" class="empty-gallery">
+                        <i class="fas fa-images"></i>
+                        <h3>No images yet</h3>
+                        <p>Capture your first matcha photo to get started!</p>
+                        <button class="btn btn-primary" onclick="switchTab('capture')">
+                            <i class="fas fa-camera"></i> Take Photo
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Statistics Tab -->
+            <section id="stats" class="tab-content">
+                <div class="stats-container">
+                    <div class="stats-header">
+                        <h2>Your Matcha Journey</h2>
+                        <p>Track your progress and discover patterns</p>
+                    </div>
+                    
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-camera"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3 id="totalPhotos">0</h3>
+                                <p>Total Photos</p>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-star"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3 id="avgRating">0.0</h3>
+                                <p>Average Rating</p>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-trophy"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3 id="bestRating">0.0</h3>
+                                <p>Best Rating</p>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-calendar"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3 id="daysActive">0</h3>
+                                <p>Days Active</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="charts-section">
+                        <div class="chart-container">
+                            <h3>Rating Distribution</h3>
+                            <div class="rating-chart" id="ratingChart">
+                                <!-- Chart will be rendered here -->
+                            </div>
+                        </div>
+                        
+                        <div class="chart-container">
+                            <h3>Recent Ratings</h3>
+                            <div class="trend-chart" id="trendChart">
+                                <!-- Chart will be rendered here -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="tips-section">
+                        <h3>Quality Improvement Tips</h3>
+                        <div class="tips-grid" id="tipsGrid">
+                            <!-- Tips will be dynamically generated -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Loading Overlay -->
+        <div id="loadingOverlay" class="loading-overlay hidden">
+            <div class="loading-content">
+                <div class="spinner"></div>
+                <p id="loadingText">Analyzing matcha quality...</p>
+            </div>
+        </div>
+
+        <!-- Modal for enlarged images -->
+        <div id="imageModal" class="modal hidden">
+            <div class="modal-content">
+                <span class="close-modal">&times;</span>
+                <img id="modalImage" alt="Enlarged image">
+                <div class="modal-info">
+                    <h3 id="modalTitle">Matcha Quality Assessment</h3>
+                    <div class="modal-rating" id="modalRating"></div>
+                    <p id="modalDate"></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toast Notifications -->
+        <div id="toastContainer" class="toast-container"></div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html> 
